@@ -26,9 +26,10 @@ void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 
 // camera
 
@@ -40,6 +41,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+const int MAX_POINT_LIGHTS = 4;
 struct PointLight {
     glm::vec3 position;
     glm::vec3 ambient;
@@ -51,13 +53,17 @@ struct PointLight {
     float quadratic;
 };
 
+PointLight pointLights[MAX_POINT_LIGHTS];
+
+
 struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(0.0f);
-    float backpackScale = 1.0f;
+    glm::vec3 lightPosition = glm::vec3(4.0f, 4.0f, 0.0f);
+    glm::vec3 firePosition = glm::vec3(0.0f);
+    float fireScale = 0.7f;
     PointLight pointLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -163,20 +169,37 @@ int main() {
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
 
+
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
+    Model ourModel("resources/objects/campfire/Campfire.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+    pointLight.position = glm::vec3(4.0f, -40.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.diffuse = glm::vec3(2.4);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
+
+/*    float x = 0.0f;
+    float y = 5.0f;
+    float z = 0.0f;
+    for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
+        pointLights[i].position = glm::vec3(x, y, z);
+        pointLights[i].ambient = glm::vec3(0.2f);
+        pointLights[i].diffuse = glm::vec3(0.8f);
+        pointLights[i].specular = glm::vec3(1.0f);
+        pointLights[i].constant = 1.0f;
+        pointLights[i].linear = 0.09f;
+        pointLights[i].quadratic = 0.032f;
+    }*/
+
+    ourShader.use();
+    ourShader.setVec3("pointLight.position", programState->lightPosition);
 
 
 
@@ -214,6 +237,17 @@ int main() {
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
+
+ /*       for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
+            std::string pointLightName = "pointLights[" + std::to_string(i) + "]";
+            ourShader.setVec3((pointLightName + ".position").c_str(), pointLights[i].position);
+            ourShader.setVec3((pointLightName + ".ambient").c_str(), pointLights[i].ambient);
+            ourShader.setVec3((pointLightName + ".diffuse").c_str(), pointLights[i].diffuse);
+            ourShader.setVec3((pointLightName + ".specular").c_str(), pointLights[i].specular);
+            ourShader.setFloat((pointLightName + ".constant").c_str(), pointLights[i].constant);
+            ourShader.setFloat((pointLightName + ".linear").c_str(), pointLights[i].linear);
+            ourShader.setFloat((pointLightName + ".quadratic").c_str(), pointLights[i].quadratic);
+        }*/
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
@@ -224,8 +258,8 @@ int main() {
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model,
-                               programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
+                               programState->firePosition); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
@@ -312,8 +346,8 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
+        ImGui::DragFloat3("Fire position", (float*)&programState->firePosition);
+        ImGui::DragFloat("Fire scale", &programState->fireScale, 0.05, 0.1, 4.0);
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
@@ -346,3 +380,5 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
 }
+
+
