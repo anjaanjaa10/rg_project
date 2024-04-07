@@ -41,7 +41,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-const int MAX_POINT_LIGHTS = 4;
 struct PointLight {
     glm::vec3 position;
     glm::vec3 ambient;
@@ -53,7 +52,8 @@ struct PointLight {
     float quadratic;
 };
 
-PointLight pointLights[MAX_POINT_LIGHTS];
+const int NUM_POINT_LIGHTS = 4;
+PointLight pointLights[NUM_POINT_LIGHTS];
 
 
 struct ProgramState {
@@ -66,7 +66,7 @@ struct ProgramState {
     float fireScale = 0.7f;
     PointLight pointLight;
     ProgramState()
-            : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
+            : camera(glm::vec3(0.0f, 1.0f, 0.0f)) {}
 
     void SaveToFile(std::string filename);
 
@@ -106,6 +106,20 @@ void ProgramState::LoadFromFile(std::string filename) {
 ProgramState *programState;
 
 void DrawImGui(ProgramState *programState);
+float groundVertices[] = {
+
+        -10.0f, 0.0f, -10.0f,   0.0f, 1.0f, 0.0f,    0.0f, 0.0f,
+        -10.0f, 0.0f,  10.0f,   0.0f, 1.0f, 0.0f,    0.0f, 10.0f,
+        10.0f, 0.0f, -10.0f,   0.0f, 1.0f, 0.0f,    10.0f, 0.0f,
+        10.0f, 0.0f,  10.0f,   0.0f, 1.0f, 0.0f,    10.0f, 10.0f
+};
+
+unsigned int groundIndices[] = {
+        0, 1, 2,
+        1, 3, 2
+};
+
+unsigned int groundVAO, groundVBO, groundEBO;
 
 int main() {
     // glfw: initialize and configure
@@ -135,12 +149,42 @@ int main() {
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+
+
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    // Kreiranje VAO, VBO, i EBO za podlogu
+    glGenVertexArrays(1, &groundVAO);
+    glGenBuffers(1, &groundVBO);
+    glGenBuffers(1, &groundEBO);
+
+    glBindVertexArray(groundVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(groundIndices), groundIndices, GL_STATIC_DRAW);
+
+// Koordinate
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+// Normala
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+// Teksturni koordinati
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+// Unbind VAO
+    glBindVertexArray(0);
+
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
@@ -175,31 +219,34 @@ int main() {
     Model ourModel("resources/objects/campfire/Campfire.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, -40.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(2.4);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
+// -----------
 
-/*    float x = 0.0f;
-    float y = 5.0f;
-    float z = 0.0f;
-    for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
-        pointLights[i].position = glm::vec3(x, y, z);
-        pointLights[i].ambient = glm::vec3(0.2f);
-        pointLights[i].diffuse = glm::vec3(0.8f);
-        pointLights[i].specular = glm::vec3(1.0f);
-        pointLights[i].constant = 1.0f;
-        pointLights[i].linear = 0.09f;
-        pointLights[i].quadratic = 0.032f;
-    }*/
+
+
+//    PointLight& pointLight = programState->pointLight;
+//    pointLight.position = glm::vec3(4.0f, -40.0, 0.0);
+//    pointLight.ambient = glm::vec3(2.0f, 2.0f, 2.0f);
+//    pointLight.diffuse = glm::vec3(2.0f, 0.8f, 0.8f);
+//    pointLight.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+//
+//    pointLight.constant = 1.0f;
+//    pointLight.linear = 0.09f;
+//    pointLight.quadratic = 0.032f;
+
+
 
     ourShader.use();
     ourShader.setVec3("pointLight.position", programState->lightPosition);
+    // point light 1
+    // positions of the point lights
+    glm::vec3 pointLightPositions[] = {
+            glm::vec3( 0.7f,  0.2f,  2.0f),
+            glm::vec3( 2.3f, -3.3f, -4.0f),
+            glm::vec3(-4.0f,  2.0f, -12.0f),
+            glm::vec3( 0.0f,  0.0f, -3.0f)
+    };
+
 
 
 
@@ -227,33 +274,60 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        ourShader.setVec3("pointLights[0].position", pointLightPositions[0]);
+        ourShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+        ourShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[0].constant", 1.0f);
+        ourShader.setFloat("pointLights[0].linear", 0.09f);
+        ourShader.setFloat("pointLights[0].quadratic", 0.032f);
+        // point light 2
+        ourShader.setVec3("pointLights[1].position", pointLightPositions[1]);
+        ourShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+        ourShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[1].constant", 1.0f);
+        ourShader.setFloat("pointLights[1].linear", 0.09f);
+        ourShader.setFloat("pointLights[1].quadratic", 0.032f);
+        // point light 3
+        ourShader.setVec3("pointLights[2].position", pointLightPositions[2]);
+        ourShader.setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
+        ourShader.setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[2].constant", 1.0f);
+        ourShader.setFloat("pointLights[2].linear", 0.09f);
+        ourShader.setFloat("pointLights[2].quadratic", 0.032f);
+        // point light 4
+        ourShader.setVec3("pointLights[3].position", pointLightPositions[3]);
+        ourShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
+        ourShader.setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[3].constant", 1.0f);
+        ourShader.setFloat("pointLights[3].linear", 0.09f);
+        ourShader.setFloat("pointLights[3].quadratic", 0.032f);
 
- /*       for (int i = 0; i < MAX_POINT_LIGHTS; ++i) {
-            std::string pointLightName = "pointLights[" + std::to_string(i) + "]";
-            ourShader.setVec3((pointLightName + ".position").c_str(), pointLights[i].position);
-            ourShader.setVec3((pointLightName + ".ambient").c_str(), pointLights[i].ambient);
-            ourShader.setVec3((pointLightName + ".diffuse").c_str(), pointLights[i].diffuse);
-            ourShader.setVec3((pointLightName + ".specular").c_str(), pointLights[i].specular);
-            ourShader.setFloat((pointLightName + ".constant").c_str(), pointLights[i].constant);
-            ourShader.setFloat((pointLightName + ".linear").c_str(), pointLights[i].linear);
-            ourShader.setFloat((pointLightName + ".quadratic").c_str(), pointLights[i].quadratic);
-        }*/
+//        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+//        ourShader.setVec3("pointLight.position", pointLight.position);
+//        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
+//        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+//        ourShader.setVec3("pointLight.specular", pointLight.specular);
+//        ourShader.setFloat("pointLight.constant", pointLight.constant);
+//        ourShader.setFloat("pointLight.linear", pointLight.linear);
+//        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+//        ourShader.setVec3("viewPosition", programState->camera.Position);
+//        ourShader.setFloat("material.shininess", 32.0f);
+
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+
+        // Iscrtavanje podloge
+        glBindVertexArray(groundVAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
@@ -363,6 +437,14 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
         ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
         ImGui::End();
+    }
+    {
+        ImGui::Begin("Camera Controls");
+        ImGui::SliderFloat("Camera X", &programState->camera.Position.x, -10.0f, 10.0f);
+        ImGui::SliderFloat("Camera Y", &programState->camera.Position.y, 0.0f, 10.0f); // Podešavanje visine kamere
+        ImGui::SliderFloat("Camera Z", &programState->camera.Position.z, -10.0f, 10.0f);
+        ImGui::End();
+
     }
 
     ImGui::Render();
