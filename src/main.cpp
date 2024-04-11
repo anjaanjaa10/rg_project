@@ -348,16 +348,16 @@ int main() {
     // -------------
     // positions
     std::vector<glm::vec3> lightPositions;
-    lightPositions.push_back(glm::vec3( 0.0f, 5.0f,  10.5f));
+    lightPositions.push_back(glm::vec3( -3.0f, 5.0f,  12.5f));
     lightPositions.push_back(glm::vec3(8.0f, 2.5f, -5.0f));
-    lightPositions.push_back(glm::vec3( 4.0f, 5.5f,  10.0f));
+    lightPositions.push_back(glm::vec3( 4.0f, 5.5f,  11.0f));
     lightPositions.push_back(glm::vec3(-0.0f,  5.4f, -5.0f));
     // colors
     std::vector<glm::vec3> lightColors;
-    lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
-    lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
-    lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
-    lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
+    lightColors.push_back(glm::vec3(0.99f,   0.99f,  0.58f));
+    lightColors.push_back(glm::vec3(0.99f,   0.99f,  0.58f));
+    lightColors.push_back(glm::vec3(0.99f,   0.99f,  0.58f));
+    lightColors.push_back(glm::vec3(0.99f,   0.99f,  0.58f));
 
 
     // shader configuration
@@ -477,7 +477,7 @@ int main() {
         // ------
 
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -533,8 +533,8 @@ int main() {
         lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
         // spotLight
 
-        float lightSpeed = 2.7f;
-        float radius = 2.0f;
+        float lightSpeed = 2.2f;
+        float radius = 5.0f;
 
 
         float lightX = sin(glfwGetTime() * lightSpeed) * radius;
@@ -642,7 +642,8 @@ int main() {
         {
             model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(lightPositions[i]));
-            model = glm::scale(model, glm::vec3(0.25f));
+            model = glm::scale(model, glm::vec3(0.60f));
+            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             shaderLight.setMat4("model", model);
             shaderLight.setVec3("lightColor", lightColors[i]);
             renderCube();
@@ -664,11 +665,11 @@ int main() {
             shaderBlur.setInt("horizontal", horizontal);
             glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
             // Renderovanje quad-a
-            framebuff.use();
+            //framebuff.use();
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-            glUniform1i(glGetUniformLocation(framebuff.ID, "screenTexture"), 0);
+            glUniform1i(glGetUniformLocation(shaderBlur.ID, "image"), 0);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
             glEnable(GL_DEPTH_TEST);
@@ -683,7 +684,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderBloomFinal.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
         shaderBloomFinal.setInt("bloom", bloom);
