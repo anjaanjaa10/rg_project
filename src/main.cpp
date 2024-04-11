@@ -53,6 +53,20 @@ struct PointLight {
     float quadratic;
 };
 
+struct SpotLight {
+    glm::vec3 position;
+    glm::vec3 direction;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    float constant;
+    float linear;
+    float quadratic;
+    float cutOff;
+    float outerCutOff;
+} spotLight;
+
+
 const int NUM_POINT_LIGHTS = 4;
 PointLight pointLights[NUM_POINT_LIGHTS];
 
@@ -72,6 +86,7 @@ struct ProgramState {
 
     float fireScale = 0.7f;
     PointLight pointLight;
+    SpotLight spotLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 1.0f, 0.0f)) {}
 
@@ -184,19 +199,6 @@ int main() {
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
-//    unsigned int planeVBO;
-//    glGenVertexArrays(1, &planeVAO);
-//    glGenBuffers(1, &planeVBO);
-//    glBindVertexArray(planeVAO);
-//    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-//    glEnableVertexAttribArray(0);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-//    glEnableVertexAttribArray(1);
-//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-//    glEnableVertexAttribArray(2);
-//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-//    glBindVertexArray(0);
 
     unsigned int floorTexture = loadTexture("resources/textures/rough-checked-texture-collage.jpg");
 
@@ -326,6 +328,20 @@ int main() {
     pointLight.quadratic = 0.032f;
 
 
+    // Konfiguracija spotlight-a
+    programState->spotLight.position = glm::vec3(0.0f, 6.0f, 0.0f); // Iznad table
+    programState->spotLight.direction = glm::vec3(0.0f, -1.0f, 0.0f); // Usmeren ka dole
+    programState->spotLight.ambient = glm::vec3(0.2f);
+    programState->spotLight.diffuse = glm::vec3(0.8f);
+    programState->spotLight.specular = glm::vec3(1.0f);
+    programState->spotLight.constant = 1.0f;
+    programState->spotLight.linear = 0.09f;
+    programState->spotLight.quadratic = 0.032f;
+    programState->spotLight.cutOff = glm::cos(glm::radians(12.5f));
+    programState->spotLight.outerCutOff = glm::cos(glm::radians(17.5f));
+
+
+
 
     ourShader.use();
     ourShader.setVec3("pointLight.position", programState->lightPosition);
@@ -405,6 +421,7 @@ int main() {
 
 
         lightingShader.use();
+
         lightingShader.setVec3("viewPos", programState->camera.Position);
         lightingShader.setFloat("material.shininess", 32.0f);
 
@@ -412,7 +429,7 @@ int main() {
         // directional light
         lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        lightingShader.setVec3("dirLight.diffuse", 0.1f, 0.1f, 0.1f);
         lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         // point light 1
         lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
@@ -447,16 +464,21 @@ int main() {
         lightingShader.setFloat("pointLights[3].linear", 0.09f);
         lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
         // spotLight
-        lightingShader.setVec3("spotLight.position", programState->camera.Position);
-        lightingShader.setVec3("spotLight.direction", programState->camera.Front);
-        lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+
+        lightingShader.setVec3("spotLight.position", programState->spotLight.position);
+        lightingShader.setVec3("spotLight.direction", programState->spotLight.direction);
+        lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(30.5f)));
+        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(60.5f)));
+        lightingShader.setVec3("spotLight.ambient", glm::vec3(0.1f));
+        lightingShader.setVec3("spotLight.diffuse", glm::vec3(0.8f));
+        lightingShader.setVec3("spotLight.specular", glm::vec3(1.0f));
         lightingShader.setFloat("spotLight.constant", 1.0f);
         lightingShader.setFloat("spotLight.linear", 0.09f);
         lightingShader.setFloat("spotLight.quadratic", 0.032f);
-        lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+
+
+
+        lightingShader.setVec3("viewPos", programState->camera.Position);
 
 
         // view/projection transformations
@@ -473,9 +495,7 @@ int main() {
 
 
         // Iscrtavanje podloge
-
-//        glBindVertexArray(groundVAO);
-//        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        
 
         glm::mat4 model = glm::mat4(1.0f);
 
