@@ -198,6 +198,31 @@ int main() {
 
     unsigned int floorTexture = loadTexture("resources/textures/rough-checked-texture-collage.jpg");
 
+    float transparentVertices[] = {
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+
+    unsigned int transparentTexture = loadTexture("resources/textures/chess.png");
+
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
@@ -273,8 +298,8 @@ int main() {
 
     // shader configuration
     // --------------------
-//    shader.use();
-//    shader.setInt("texture1", 0);
+    shader.use();
+    shader.setInt("texture1", 0);
     // load models
     // -----------
     Model ourModel("resources/objects/chess/12926_Wooden_Chess_King_Side_A_v1_l3.obj");
@@ -317,7 +342,7 @@ int main() {
     pointLights[1].quadratic = 0.032f;
 
     glm::vec3 pointLightPositions[] = {
-            glm::vec3( 0.7f,  0.2f,  2.0f),
+            glm::vec3( 0.7f,  20.2f,  2.0f),
             glm::vec3( 2.3f, -3.3f, -4.0f),
             glm::vec3(-4.0f,  2.0f, -12.0f),
             glm::vec3( 0.0f,  0.0f, -3.0f)
@@ -373,7 +398,6 @@ int main() {
 
 
         // don't forget to enable shader before setting uniforms
-        shader.use();
 
 
 
@@ -488,6 +512,23 @@ int main() {
 //        model2 = glm::scale(model2, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
 //        ourShader.setMat4("model2", model2);
         //drvo.Draw(ourShader);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        shader.use();
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-3.4f,3.7f,2.8f));
+        model = glm::scale(model, glm::vec3(7.0f));
+        shader.setMat4("projection", projection);
+        shader.setMat4("view", view);
+        shader.setMat4("model", model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glDisable(GL_BLEND);
 
 
 
