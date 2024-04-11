@@ -78,7 +78,7 @@ struct ProgramState {
     bool CameraMouseMovementUpdateEnabled = false;
     glm::vec3 lightPosition = glm::vec3(4.0f, 4.0f, 0.0f);
     glm::vec3 modelPosition = glm::vec3(-1.5f, 0.0f, 1.5f);
-    glm::vec3 modelPosition2 = glm::vec3(-1.5f, 0.0f, 1.5f);
+    glm::vec3 modelPosition2 = glm::vec3(8.5f, 0.0f, -5.5f);
 
     // lighting
     glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
@@ -134,9 +134,9 @@ void DrawImGui(ProgramState *programState);
 float groundVertices[] = {
         // Pozicije         // Normale         // Koordinate teksture
         -10.0f, 0.0f, -10.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-        -10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-        10.0f, 0.0f, -10.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
-        10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f
+        -10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  0.0f, 2.0f,
+        10.0f, 0.0f, -10.0f,  0.0f, 1.0f, 0.0f,  2.0f, 0.0f,
+        10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  2.0f, 2.0f
 };
 
 
@@ -226,7 +226,7 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glBindVertexArray(0);
 
-    unsigned int transparentTexture = loadTexture("resources/textures/chess.png");
+    unsigned int transparentTexture = loadTexture("resources/textures/matf2.png");
 
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
@@ -263,11 +263,6 @@ int main() {
 
 
 
-
-
-
-    //unsigned int transparentTexture = loadTexture(FileSystem::getPath("resources/textures/grass.png").c_str());
-
     unsigned int framebuffer;
     unsigned int textureColorbuffer;
     unsigned int rbo;
@@ -292,14 +287,6 @@ int main() {
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-//    vector<glm::vec3> vegetation
-//            {
-//                    glm::vec3(-1.5f, 0.0f, -0.48f),
-//                    glm::vec3( 1.5f, 0.0f, 0.51f),
-//                    glm::vec3( 0.0f, 0.0f, 0.7f),
-//                    glm::vec3(-0.3f, 0.0f, -2.3f),
-//                    glm::vec3 (0.5f, 0.0f, -0.6f)
-//            };
 
     // shader configuration
     // --------------------
@@ -344,10 +331,12 @@ int main() {
 
 
 
+
     ourShader.use();
     ourShader.setVec3("pointLight.position", programState->lightPosition);
 
     lightingShader.use();
+
 
     // point light 1
     // positions of the point lights
@@ -391,9 +380,6 @@ int main() {
 
 
 
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -429,8 +415,8 @@ int main() {
 
         // directional light
         lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        lightingShader.setVec3("dirLight.diffuse", 0.2f, 0.2f, 0.2f);
+        lightingShader.setVec3("dirLight.ambient", 0.1, 0.1, 0.1f);
+        lightingShader.setVec3("dirLight.diffuse", 0.05f, 0.05f, 0.05f);
         lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         // point light 1
         lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
@@ -466,10 +452,19 @@ int main() {
         lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
         // spotLight
 
+        float lightSpeed = 0.7f;
+        float radius = 2.0f;
+
+
+        float lightX = sin(glfwGetTime() * lightSpeed) * radius;
+        float lightZ = cos(glfwGetTime() * lightSpeed) * radius;
+        programState->spotLight.position.x = lightX;
+        programState->spotLight.position.z = lightZ;
+
         lightingShader.setVec3("spotLight.position", programState->spotLight.position);
         lightingShader.setVec3("spotLight.direction", programState->spotLight.direction);
         lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(30.5f)));
-        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(60.5f)));
+        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(70.5f)));
         lightingShader.setVec3("spotLight.ambient", glm::vec3(0.1f));
         lightingShader.setVec3("spotLight.diffuse", glm::vec3(0.8f));
         lightingShader.setVec3("spotLight.specular", glm::vec3(1.0f));
@@ -506,13 +501,6 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(-1.5f, 0.0f, 1.5f));
-//        model = glm::scale(model, glm::vec3(0.5f));
-//        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
-//        ourShader.setMat4("model", model);
-//        ourModel.Draw(ourShader);
-
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->modelPosition);
         model = glm::scale(model, glm::vec3(0.5f));
@@ -527,35 +515,28 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel2.Draw(ourShader);
 
-
-
-        // render the loaded model
-
-
-//        glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 1.5f));// translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(0.5f));
-//        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-//        ourShader.setMat4("model", model);
-//        ourModel.Draw(ourShader);
-
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glDepthMask(GL_FALSE);
 
         shader.use();
         glBindVertexArray(transparentVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, transparentTexture);
+
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-3.4f,3.7f,2.8f));
-        model = glm::scale(model, glm::vec3(7.0f));
+        model = glm::translate(model, glm::vec3(5.50f, 0.01f, 7.0f));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(4.0f));
         shader.setMat4("projection", projection);
         shader.setMat4("view", view);
         shader.setMat4("model", model);
 
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
 
 
 
@@ -681,8 +662,7 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-//        ImGui::DragFloat3("Fire position", (float*)&programState->firePosition);
-//        ImGui::DragFloat("Fire scale", &programState->fireScale, 0.05, 0.1, 4.0);
+
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
