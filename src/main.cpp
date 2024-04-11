@@ -78,6 +78,7 @@ struct ProgramState {
     bool CameraMouseMovementUpdateEnabled = false;
     glm::vec3 lightPosition = glm::vec3(4.0f, 4.0f, 0.0f);
     glm::vec3 modelPosition = glm::vec3(-1.5f, 0.0f, 1.5f);
+    glm::vec3 modelPosition2 = glm::vec3(-1.5f, 0.0f, 1.5f);
 
     // lighting
     glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
@@ -309,8 +310,8 @@ int main() {
     Model ourModel("resources/objects/chess/12926_Wooden_Chess_King_Side_A_v1_l3.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
-    Model drvo("resources/objects/tree/Tree1.obj");
-    drvo.SetShaderTextureNamePrefix("material.");
+    Model ourModel2("resources/objects/chessB/12936_Wooden_Chess_Knight_Side_B_V2_l3.obj");
+    ourModel2.SetShaderTextureNamePrefix("material.");
 
 
 // -----------
@@ -334,7 +335,7 @@ int main() {
     programState->spotLight.ambient = glm::vec3(0.2f);
     programState->spotLight.diffuse = glm::vec3(0.8f);
     programState->spotLight.specular = glm::vec3(1.0f);
-    programState->spotLight.constant = 1.0f;
+    programState->spotLight.constant = 2.0f;
     programState->spotLight.linear = 0.09f;
     programState->spotLight.quadratic = 0.032f;
     programState->spotLight.cutOff = glm::cos(glm::radians(12.5f));
@@ -429,7 +430,7 @@ int main() {
         // directional light
         lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        lightingShader.setVec3("dirLight.diffuse", 0.1f, 0.1f, 0.1f);
+        lightingShader.setVec3("dirLight.diffuse", 0.2f, 0.2f, 0.2f);
         lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         // point light 1
         lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
@@ -495,7 +496,7 @@ int main() {
 
 
         // Iscrtavanje podloge
-        
+
 
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -519,9 +520,12 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
-
-
-
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->modelPosition2);
+        model = glm::scale(model, glm::vec3(0.5f));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        ourModel2.Draw(ourShader);
 
 
 
@@ -535,13 +539,6 @@ int main() {
 //        ourShader.setMat4("model", model);
 //        ourModel.Draw(ourShader);
 
-
-//        glm::mat4 model2 = glm::mat4(1.0f);
-//        model2 = glm::translate(model2,
-//                               programState->treePosition); // translate it down so it's at the center of the scene
-//        model2 = glm::scale(model2, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
-//        ourShader.setMat4("model2", model2);
-        //drvo.Draw(ourShader);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -627,6 +624,16 @@ void processInput(GLFWwindow *window) {
         programState->modelPosition.x -= modelSpeed;
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         programState->modelPosition.x += modelSpeed;
+
+    // Kretanje modela2
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        programState->modelPosition2.z -= modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+        programState->modelPosition2.z += modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+        programState->modelPosition2.x -= modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+        programState->modelPosition2.x += modelSpeed;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
