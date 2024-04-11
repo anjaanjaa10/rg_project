@@ -65,8 +65,8 @@ struct ProgramState {
     glm::vec3 lightPosition = glm::vec3(4.0f, 4.0f, 0.0f);
     // lighting
     glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
-    glm::vec3 firePosition = glm::vec3(0.0f);
-    glm::vec3 treePosition = glm::vec3(1.0f);
+    //glm::vec3 firePosition = glm::vec3(0.0f);
+    //glm::vec3 treePosition = glm::vec3(1.0f);
 
     float fireScale = 0.7f;
     PointLight pointLight;
@@ -114,12 +114,13 @@ void DrawImGui(ProgramState *programState);
 
 
 float groundVertices[] = {
-
-        -10.0f, 0.0f, -10.0f,   0.0f, 1.0f, 0.0f,    0.0f, 0.0f,
-        -10.0f, 0.0f,  10.0f,   0.0f, 1.0f, 0.0f,    0.0f, 10.0f,
-        10.0f, 0.0f, -10.0f,   0.0f, 1.0f, 0.0f,    10.0f, 0.0f,
-        10.0f, 0.0f,  10.0f,   0.0f, 1.0f, 0.0f,    10.0f, 10.0f
+        // Pozicije         // Normale         // Koordinate teksture
+        -10.0f, 0.0f, -10.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+        -10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+        10.0f, 0.0f, -10.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+        10.0f, 0.0f,  10.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f
 };
+
 
 unsigned int groundIndices[] = {
         0, 1, 2,
@@ -168,29 +169,34 @@ int main() {
     glGenVertexArrays(1, &groundVAO);
     glGenBuffers(1, &groundVBO);
     glGenBuffers(1, &groundEBO);
-
     glBindVertexArray(groundVAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
-
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(groundIndices), groundIndices, GL_STATIC_DRAW);
-
-// Koordinate
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-// Normala
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
- //Teksturni koordinati
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
-
-// Unbind VAO
     glBindVertexArray(0);
+
+//    unsigned int planeVBO;
+//    glGenVertexArrays(1, &planeVAO);
+//    glGenBuffers(1, &planeVBO);
+//    glBindVertexArray(planeVAO);
+//    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+//    glEnableVertexAttribArray(0);
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+//    glEnableVertexAttribArray(1);
+//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+//    glEnableVertexAttribArray(2);
+//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+//    glBindVertexArray(0);
+
+    unsigned int floorTexture = loadTexture("resources/textures/rough-checked-texture-collage.jpg");
 
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
@@ -271,7 +277,7 @@ int main() {
 //    shader.setInt("texture1", 0);
     // load models
     // -----------
-    Model ourModel("resources/objects/campfire/Campfire.obj");
+    Model ourModel("resources/objects/chess/12926_Wooden_Chess_King_Side_A_v1_l3.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
     Model drvo("resources/objects/tree/Tree1.obj");
@@ -436,28 +442,52 @@ int main() {
         ourShader.setMat4("view", view);
 
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, floorTexture);
+
+
         // Iscrtavanje podloge
+
+//        glBindVertexArray(groundVAO);
+//        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glm::mat4 model = glm::mat4(1.0f);
+
+        ourShader.setMat4("model", model);
+
         glBindVertexArray(groundVAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-1.5f, 0.0f, 1.5f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+        ourShader.setMat4("model", model);
+        ourModel.Draw(ourShader);
+
+
 
 
 
 
         // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model,
-                               programState->firePosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        ourModel.Draw(lightingShader);
 
 
-        glm::mat4 model2 = glm::mat4(1.0f);
-        model2 = glm::translate(model2,
-                               programState->treePosition); // translate it down so it's at the center of the scene
-        model2 = glm::scale(model2, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model2", model2);
-        drvo.Draw(lightingShader);
+//        glm::mat4 model = glm::mat4(1.0f);
+//        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 1.5f));// translate it down so it's at the center of the scene
+//        model = glm::scale(model, glm::vec3(0.5f));
+//        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+//        ourShader.setMat4("model", model);
+//        ourModel.Draw(ourShader);
+
+
+//        glm::mat4 model2 = glm::mat4(1.0f);
+//        model2 = glm::translate(model2,
+//                               programState->treePosition); // translate it down so it's at the center of the scene
+//        model2 = glm::scale(model2, glm::vec3(programState->fireScale));    // it's a bit too big for our scene, so scale it down
+//        ourShader.setMat4("model2", model2);
+        //drvo.Draw(ourShader);
 
 
 
@@ -562,8 +592,8 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Fire position", (float*)&programState->firePosition);
-        ImGui::DragFloat("Fire scale", &programState->fireScale, 0.05, 0.1, 4.0);
+//        ImGui::DragFloat3("Fire position", (float*)&programState->firePosition);
+//        ImGui::DragFloat("Fire scale", &programState->fireScale, 0.05, 0.1, 4.0);
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
@@ -604,15 +634,13 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
 }
-unsigned int loadTexture(char const * path)
-{
+unsigned int loadTexture(char const *path) {
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
     unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
-    if (data)
-    {
+    if (data) {
         GLenum format;
         if (nrComponents == 1)
             format = GL_RED;
@@ -624,21 +652,17 @@ unsigned int loadTexture(char const * path)
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
     }
-    else
-    {
+    else {
         std::cout << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }
 
     return textureID;
 }
-
-
