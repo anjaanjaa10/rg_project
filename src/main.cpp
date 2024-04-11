@@ -61,8 +61,10 @@ struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
     Camera camera;
-    bool CameraMouseMovementUpdateEnabled = true;
+    bool CameraMouseMovementUpdateEnabled = false;
     glm::vec3 lightPosition = glm::vec3(4.0f, 4.0f, 0.0f);
+    glm::vec3 modelPosition = glm::vec3(-1.5f, 0.0f, 1.5f);
+
     // lighting
     glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
     //glm::vec3 firePosition = glm::vec3(0.0f);
@@ -483,12 +485,20 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
+//        model = glm::mat4(1.0f);
+//        model = glm::translate(model, glm::vec3(-1.5f, 0.0f, 1.5f));
+//        model = glm::scale(model, glm::vec3(0.5f));
+//        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+//        ourShader.setMat4("model", model);
+//        ourModel.Draw(ourShader);
+
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-1.5f, 0.0f, 1.5f));
+        model = glm::translate(model, programState->modelPosition);
         model = glm::scale(model, glm::vec3(0.5f));
         model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
+
 
 
 
@@ -526,7 +536,7 @@ int main() {
         shader.setMat4("view", view);
         shader.setMat4("model", model);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glDisable(GL_BLEND);
 
@@ -586,6 +596,17 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    // Kretanje modela
+    float modelSpeed = 2.5f * deltaTime; // Brzina kretanja modela
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        programState->modelPosition.z -= modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        programState->modelPosition.z += modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        programState->modelPosition.x -= modelSpeed;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        programState->modelPosition.x += modelSpeed;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
