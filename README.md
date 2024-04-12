@@ -2,6 +2,9 @@
 
 Scenu cini sahovska tabla sa MATF logom na kojoj su dve figure osvetljene lightbox-ovima, koji doprinose atmosferi.
 
+![Chess](https://github.com/anjaanjaa10/rg_project/assets/73238897/2c282eb3-3a0c-486f-89e4-793d7418e69c)
+
+
 Link ka youtube videu: https://www.youtube.com/watch?v=HUkT0n2Mc4g
 
 # Uputstvo
